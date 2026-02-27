@@ -1,0 +1,31 @@
+body {
+  font-family: "Noto Sans Thai", serif;
+}
+
+.nav-item .nav-link {
+  font-size: large;
+  font-weight: 400;
+  color: #3d4dd9;
+}
+
+tr th,
+tr td {
+  white-space: nowrap;
+}
+
+.selected-row td {
+  background-color: #f8ff95 !important;
+  color: #000 !important;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.alert-fixed {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1060;
+  min-width: 280px;
+}

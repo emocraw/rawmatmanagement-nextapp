@@ -1,0 +1,40 @@
+﻿# คำอธิบายโฟลเดอร์ในโปรเจกต์ nextjs
+
+## app/
+โฟลเดอร์หลักของ Next.js App Router
+- เก็บหน้าเว็บ (`page.tsx`), layout (`layout.tsx`) และ API Route (`app/api/...`)
+- ทุก URL ของระบบถูกกำหนดจากโครงสร้างโฟลเดอร์นี้
+
+## components/
+โฟลเดอร์รวม UI component ที่ใช้ซ้ำหลายหน้า
+- เช่น navbar, card, shared widgets
+- ช่วยลดโค้ดซ้ำและทำให้ปรับ UI กลางได้ง่าย
+
+## hooks/
+โฟลเดอร์เก็บ React custom hooks
+- ใช้รวม logic ที่นำกลับมาใช้ซ้ำได้
+- เช่น logic ตรวจ session/token ก่อนเข้าหน้า
+
+## lib/
+โฟลเดอร์ utility และ business/data access logic ฝั่ง server
+- เช่น DB connection, query repository, auth helper, env helper
+- ใช้แยก logic ออกจากหน้าและ API ให้โค้ดอ่านง่ายและดูแลง่าย
+
+## public/
+โฟลเดอร์ไฟล์ static
+- รูปภาพ, icon, asset ที่เรียกผ่าน URL ตรง เช่น `/assets/...`
+- ไม่ผ่าน bundling ของโค้ด React
+
+## types/
+โฟลเดอร์เก็บ TypeScript type/interface ส่วนกลาง
+- ใช้แชร์ชนิดข้อมูลระหว่างหน้า, API, และ service
+
+## .next/
+โฟลเดอร์ build cache/runtime ที่ Next.js สร้างอัตโนมัติ
+- มีไฟล์ที่ compile แล้ว
+- ไม่ควรแก้ไขเอง และมักไม่ต้อง commit
+
+## node_modules/
+โฟลเดอร์ dependency ที่ติดตั้งจาก npm
+- สร้างจาก `package.json`
+- ไม่ควรแก้ไขเอง และไม่ต้อง commit
