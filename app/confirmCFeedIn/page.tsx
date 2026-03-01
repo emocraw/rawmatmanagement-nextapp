@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AppNav } from "@/components/AppNav";
+import { PageLoader } from "@/components/PageLoader";
 import { useSessionGuard } from "@/hooks/useSessionGuard";
 
 type WipRow = { Batch: string; Matcode: string; qty: number; cqty: number; processorder: string; BatchPL: string };
@@ -180,7 +181,7 @@ export default function ConfirmCFeedInPage() {
     }
   }
 
-  if (session.loading) return <main className="container py-4">Loading...</main>;
+  if (session.loading) return <PageLoader text="Loading data..." />;
 
   return (
     <main>

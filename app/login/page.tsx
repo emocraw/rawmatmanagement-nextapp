@@ -2,8 +2,10 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PageLoader } from "@/components/PageLoader";
 
 const MACHINES = ["PL1", "PL3", "PL4", "PL5"];
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,6 +35,7 @@ export default function LoginPage() {
 
       sessionStorage.setItem("token", data.token);
       sessionStorage.setItem("machine", machine);
+      await delay(3000);
       router.push("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unexpected error");
@@ -41,10 +44,11 @@ export default function LoginPage() {
     }
   }
 
+  if (loading) return <PageLoader text="Logging in..." />;
+
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
       <div className="card p-4 shadow-lg" style={{ width: "100%", maxWidth: 400 }}>
-        <h3 className="text-center mb-4">Login</h3>
         <img className="img-fluid mb-3" src="/assets/thumbnail_image001.png" alt="Logo" />
 
         <form onSubmit={handleLogin}>
