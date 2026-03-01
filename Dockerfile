@@ -1,29 +1,29 @@
-# 1️⃣ Base Image
-FROM node:20-alpine AS base
+# ---------- Build Stage ----------
+FROM node:20-alpine AS builder
 
-# 2️⃣ Set working directory
 WORKDIR /app
 
-# 3️⃣ Copy package files
 COPY package.json package-lock.json ./
-
-# 4️⃣ Install dependencies
 RUN npm install
 
-# 5️⃣ Copy project files
 COPY . .
-
-# 6️⃣ Build Next.js
 RUN npm run build
 
-# 7️⃣ Production image
+
+# ---------- Production Stage ----------
 FROM node:20-alpine AS production
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY --from=base /app ./
+# copy only necessary files
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package-lock.json ./
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/next.config.js ./next.config.js
 
 EXPOSE 3000
 
