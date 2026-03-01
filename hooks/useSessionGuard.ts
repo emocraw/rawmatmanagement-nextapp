@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { clearAppSession, getSessionAuth, setSessionProfile } from "@/lib/sessionStorage";
 
 type SessionState = {
   token: string;
@@ -22,8 +23,7 @@ export function useSessionGuard(): SessionState {
   });
 
   useEffect(() => {
-    const token = sessionStorage.getItem("token") ?? "";
-    const machine = sessionStorage.getItem("machine") ?? "";
+    const { token, machine } = getSessionAuth();
 
     if (!token || !machine) {
       router.push("/login");
@@ -47,13 +47,12 @@ export function useSessionGuard(): SessionState {
         const user = String(data[0].user_ID ?? "");
         const name = String(data[0].name_user ?? "");
 
-        sessionStorage.setItem("user", user);
-        sessionStorage.setItem("Name_Surname", name);
+        setSessionProfile(user, name);
 
         setState({ token, machine, user, name, loading: false });
       })
       .catch(() => {
-        sessionStorage.clear();
+        clearAppSession();
         router.push("/login");
       });
   }, [router]);

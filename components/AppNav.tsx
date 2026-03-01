@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { Route } from "next";
+import { clearAppSession } from "@/lib/sessionStorage";
 
 const ITEMS: Array<{ href: Route; label: string; id: string }> = [
   { href: "/", label: "Feed In", id: "index" },
@@ -49,7 +50,7 @@ export function AppNav({ userName }: { userName: string }) {
                 type="button"
                 className="btn btn-danger"
                 onClick={() => {
-                  sessionStorage.clear();
+                  clearAppSession();
                   router.push("/login");
                 }}
               >

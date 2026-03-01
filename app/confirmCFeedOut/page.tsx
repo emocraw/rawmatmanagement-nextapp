@@ -2,11 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AppNav } from "@/components/AppNav";
+import { GradeCActionForm } from "@/components/GradeCActionForm";
 import { PageLoader } from "@/components/PageLoader";
+import { SelectableDataTable, type SelectableTableColumn } from "@/components/SelectableDataTable";
+import { WorkFilterBar } from "@/components/WorkFilterBar";
 import { useSessionGuard } from "@/hooks/useSessionGuard";
 
 type FgRow = { mcname: string; processorder: string; Matcode: string; matdes: string; Batch: string; totalOutput: number; slocs: string; cqty: number };
 type GradeCDetail = { ID: number; Material: string; Batch: string; Reason_Name: string; GroupMachine: string; C_Qty: number; English_Name: string };
+type ReasonOption = { Reason_Code: string; Reason_Name: string };
+type GroupOption = { id: string | number; sub_proces: string };
 
 export default function ConfirmCFeedOutPage() {
   const session = useSessionGuard();
@@ -14,10 +19,11 @@ export default function ConfirmCFeedOutPage() {
   const [shift, setShift] = useState("night");
   const [rows, setRows] = useState<FgRow[]>([]);
   const [selected, setSelected] = useState<FgRow | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [details, setDetails] = useState<GradeCDetail[]>([]);
   const [selectedDetail, setSelectedDetail] = useState<GradeCDetail | null>(null);
-  const [reasons, setReasons] = useState<any[]>([]);
-  const [groups, setGroups] = useState<any[]>([]);
+  const [reasons, setReasons] = useState<ReasonOption[]>([]);
+  const [groups, setGroups] = useState<GroupOption[]>([]);
   const [reasonC, setReasonC] = useState("");
   const [groupMc, setGroupMc] = useState("");
   const [cqty, setCqty] = useState("");
@@ -30,6 +36,28 @@ export default function ConfirmCFeedOutPage() {
     () => rows.reduce((acc, row) => ({ qty: acc.qty + Number(row.totalOutput || 0), cqty: acc.cqty + Number(row.cqty || 0) }), { qty: 0, cqty: 0 }),
     [rows]
   );
+  const rowKey = (row: FgRow) => `${row.Batch}|${row.Matcode}|${row.processorder}`;
+  const detailRowKey = (row: GradeCDetail) => String(row.ID);
+
+  const fgColumns: SelectableTableColumn<FgRow>[] = [
+    { key: "machine", header: "Machine", renderCell: (row) => row.mcname },
+    { key: "processorder", header: "Processorder", renderCell: (row) => row.processorder },
+    { key: "matcode", header: "Matcode", renderCell: (row) => row.Matcode },
+    { key: "matdes", header: "Matdesc", renderCell: (row) => row.matdes },
+    { key: "batch", header: "Batch", renderCell: (row) => row.Batch },
+    { key: "totalOutput", header: "Total Output", renderCell: (row) => row.totalOutput },
+    { key: "slocs", header: "SLoc", renderCell: (row) => row.slocs },
+    { key: "cqty", header: "C Qty", renderCell: (row) => row.cqty || 0 }
+  ];
+
+  const detailColumns: SelectableTableColumn<GradeCDetail>[] = [
+    { key: "material", header: "Matcode", renderCell: (row) => row.Material },
+    { key: "batch", header: "Batch", renderCell: (row) => row.Batch },
+    { key: "reason", header: "Reason_Code", renderCell: (row) => row.Reason_Name },
+    { key: "group", header: "Group Machine", renderCell: (row) => row.GroupMachine || "-" },
+    { key: "qty", header: "Qty", renderCell: (row) => row.C_Qty || 0 },
+    { key: "user", header: "User", renderCell: (row) => row.English_Name || "-" }
+  ];
 
   useEffect(() => {
     if (session.loading) return;
@@ -80,6 +108,7 @@ export default function ConfirmCFeedOutPage() {
       }
       setRows(data);
       setSelected(null);
+      setSelectedKey(null);
       setDetails([]);
       setSelectedDetail(null);
       setBatchRawmatOptions([]);
@@ -94,6 +123,7 @@ export default function ConfirmCFeedOutPage() {
 
   async function onSelectRow(row: FgRow) {
     setSelected(row);
+    setSelectedKey(rowKey(row));
     setSelectedDetail(null);
     setBatchRawmat("");
 
@@ -193,57 +223,26 @@ export default function ConfirmCFeedOutPage() {
       <div className="container">
         <h1 className="text-primary">Confirm Grade C Feed Out <span>{session.machine ? `(${session.machine})` : ""}</span></h1>
 
-        <div className="row">
-          <div className="col-6">
-            <label className="mb-3 text-secondary">Work Date</label>
-            <input className="form-control mb-3" type="date" value={workDate} onChange={(e) => setWorkDate(e.target.value)} />
-          </div>
-          <div className="col-6">
-            <label className="mb-3 text-secondary">Shift</label>
-            <select className="form-control" value={shift} onChange={(e) => setShift(e.target.value)}>
-              <option value="night">Night</option>
-              <option value="day">Day</option>
-            </select>
-          </div>
-        </div>
-        <div className="d-flex">
-          <button type="button" className="btn btn-warning ms-auto mb-3" onClick={findFg} disabled={loading}>Find FG in Shift</button>
-        </div>
+        <WorkFilterBar
+          workDate={workDate}
+          shift={shift}
+          loading={loading}
+          findLabel="Find FG in Shift"
+          onWorkDateChange={setWorkDate}
+          onShiftChange={setShift}
+          onFind={findFg}
+        />
 
         <div className="table-wrap">
-          <table className="table border border-1">
-            <thead>
-              <tr>
-                <th>Machine</th>
-                <th>Processorder</th>
-                <th>Matcode</th>
-                <th>Matdesc</th>
-                <th>Batch</th>
-                <th>Total Output</th>
-                <th>SLoc</th>
-                <th>C Qty</th>
-              </tr>
-            </thead>
-            <tbody id="bodyFg">
-              {rows.map((row) => (
-                <tr
-                  key={`${row.Batch}-${row.Matcode}-${row.processorder}`}
-                  className={selected?.Batch === row.Batch && selected?.Matcode === row.Matcode ? "selected-row" : ""}
-                  style={{ cursor: "pointer" }}
-                  onClick={() => onSelectRow(row)}
-                >
-                  <td>{row.mcname}</td>
-                  <td>{row.processorder}</td>
-                  <td>{row.Matcode}</td>
-                  <td>{row.matdes}</td>
-                  <td>{row.Batch}</td>
-                  <td>{row.totalOutput}</td>
-                  <td>{row.slocs}</td>
-                  <td>{row.cqty || 0}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <SelectableDataTable
+            rows={rows}
+            columns={fgColumns}
+            getRowKey={rowKey}
+            selectedKey={selectedKey}
+            onSelectRow={onSelectRow}
+            tbodyId="bodyFg"
+            wrapperClassName=""
+          />
           <div className="col-12">
             <label>Total FG Confirm: <span className="text-success">{totals.qty || "Waiting"}</span></label>
           </div>
@@ -258,64 +257,42 @@ export default function ConfirmCFeedOutPage() {
           <label>BatchFG: <span className="text-success">{selected?.Batch ?? "Waiting"}</span></label>
           <label>C Qty: <span className="text-success">{selected?.cqty ?? "Waiting"}</span></label>
 
-          <div className="col-12">
-            <div className="d-flex">
-              <select className="form-control" style={{ width: 300 }} value={reasonC} onChange={(e) => setReasonC(e.target.value)}>
-                <option value="">Select reason Grade C</option>
-                {reasons.map((r: any) => <option key={r.Reason_Code} value={r.Reason_Code}>{r.Reason_Name}</option>)}
-              </select>
-              <select className="form-control ms-3" style={{ width: 300 }} value={groupMc} onChange={(e) => setGroupMc(e.target.value)}>
-                <option value="">Select Group Machine</option>
-                {groups.map((g: any) => <option key={g.id} value={g.sub_proces}>{g.sub_proces}</option>)}
-              </select>
-              <input id="cqty" className="ms-3" type="number" value={cqty} onChange={(e) => setCqty(e.target.value)} />
-              <label className="form-label">pcs</label>
+          <GradeCActionForm
+            reasonC={reasonC}
+            groupMc={groupMc}
+            cqty={cqty}
+            reasons={reasons}
+            groups={groups}
+            loading={loading}
+            onReasonChange={setReasonC}
+            onGroupChange={setGroupMc}
+            onCqtyChange={setCqty}
+            onConfirm={confirmGradeC}
+            reasonWidth={300}
+            groupWidth={300}
+            extraField={
               <div className="ms-3">
                 <select className="form-control" style={{ width: 220 }} value={batchRawmat} onChange={(e) => setBatchRawmat(e.target.value)}>
                   <option value="">Select Batch Rawmat</option>
-                  {batchRawmatOptions.map((b) => <option key={b} value={b}>{b}</option>)}
+                  {batchRawmatOptions.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
                 </select>
               </div>
-            </div>
-          </div>
-          <div className="col-12 col-xl-6 px-3 pb-3">
-            <div className="d-flex align-items-center">
-              <button type="button" className="btn btn-success" onClick={confirmGradeC} disabled={loading}>Confirm Grade C</button>
-            </div>
-          </div>
+            }
+          />
         </div>
 
-        <div className="table-wrap">
-          <table className="table border border-1">
-            <thead>
-              <tr>
-                <th>Matcode</th>
-                <th>Batch</th>
-                <th>Reason_Code</th>
-                <th>Group Machine</th>
-                <th>Qty</th>
-                <th>User</th>
-              </tr>
-            </thead>
-            <tbody id="bodyGradeCDetail">
-              {details.map((row) => (
-                <tr
-                  key={row.ID}
-                  onClick={() => setSelectedDetail(row)}
-                  className={selectedDetail?.ID === row.ID ? "selected-row" : ""}
-                  style={{ cursor: "pointer" }}
-                >
-                  <td>{row.Material}</td>
-                  <td>{row.Batch}</td>
-                  <td>{row.Reason_Name}</td>
-                  <td>{row.GroupMachine || "-"}</td>
-                  <td>{row.C_Qty || 0}</td>
-                  <td>{row.English_Name || "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <SelectableDataTable
+          rows={details}
+          columns={detailColumns}
+          getRowKey={detailRowKey}
+          selectedKey={selectedDetail ? detailRowKey(selectedDetail) : null}
+          onSelectRow={(row) => setSelectedDetail(row)}
+          tbodyId="bodyGradeCDetail"
+        />
         <div className="col-12 col-xl-6 px-3 pb-3">
           <div className="d-flex align-items-center">
             <button type="button" className="btn btn-danger" onClick={deleteRow} disabled={loading}>Delete Row</button>

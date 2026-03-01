@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageLoader } from "@/components/PageLoader";
+import { setSessionAuth } from "@/lib/sessionStorage";
 
 const MACHINES = ["PL1", "PL3", "PL4", "PL5"];
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -33,8 +34,7 @@ export default function LoginPage() {
         return;
       }
 
-      sessionStorage.setItem("token", data.token);
-      sessionStorage.setItem("machine", machine);
+      setSessionAuth(String(data.token ?? ""), machine);
       await delay(3000);
       router.push("/");
     } catch (err) {
